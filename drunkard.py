@@ -31,29 +31,24 @@ def generate_single_drunkard_plot():
     range_ = [i for i in range(len(y_data))]
     df = dict({'x': range_, 'y': y_data, })
     fig = go.Figure()
-    # fig.add_trace(go.Scatter(df, x=range_, y=y_data, mode='lines+markers', line_color='red',  showlegend=True))
     fig.add_trace(go.Scatter(df, x=range_, y=y_data, mode='lines+markers', line_color='red'))
-
-    # fig = px.scatter(df, x="x", y="y" , labels={'x': 'steps', 'y': 'X'},)
-    # fig = px.line(df, x="x", y="y", color="continent", line_group="country", hover_name="country", line_shape="spline", render_mode="svg")
-    fig.update_layout({'plot_bgcolor': 'rgb(255, 255, 255)',
-                       'paper_bgcolor': 'rgb(255, 255, 255)'}, width=600, height=600)
-    fig.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror='allticks', ticks='inside', tickwidth=2,
-                     ticklen=10, title='<b>Steps</b>', title_font_size=20, title_font_color='black')
-    fig.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror='allticks', ticks='inside', tickwidth=2,
-                     ticklen=10, title='<b>X</b>', title_font_size=20, title_font_color='black')
+    fig.update_layout({'plot_bgcolor': 'rgb(255, 255, 255)', 'paper_bgcolor': 'rgb(255, 255, 255)'}, width=600,
+                      height=600)
+    fig.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticks='outside', tickwidth=2,
+                     ticklen=8, title='Steps', title_font_size=20, title_font_color='black')
+    fig.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticks='outside', tickwidth=2,
+                     ticklen=8, title='X', title_font_size=20, title_font_color='black')
     fig.update_traces(marker_line_color='red', selector=dict(type='scatter'))
     fig.show()
 
 
-def generate_multiple_drunkard_plot(drunkards=30_000, steps=100):
+def generate_multiple_drunkard_plot(drunkards=500_000, steps=1_000):
     data = multiple_drunkard(drunkards, steps)
     x = list(data.keys())
     y = list(data.values())
     df = dict({'x': x, 'y': y})
 
     fig = go.Figure()
-    # fig.add_trace(go.Scatter(df, x=range_, y=y_data, mode='lines+markers', line_color='red',  showlegend=True))
     fig.add_trace(go.Bar(df, x=x, y=y))
 
     fig.update_layout({'plot_bgcolor': 'rgb(255, 255, 255)', 'paper_bgcolor': 'rgb(255, 255, 255)'},
@@ -64,7 +59,6 @@ def generate_multiple_drunkard_plot(drunkards=30_000, steps=100):
     fig.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror=False, ticks='outside', tickwidth=2,
                      ticklen=10, title='<b>number of drunkards</b>', title_font_size=20, title_font_color='black')
     fig.update_traces(marker_color='red', marker_line_color='red')
-    # fig.update_traces(marker_line_color='red', selector=dict(type='scatter'))
     fig.show()
 
 
@@ -102,9 +96,10 @@ def standard_deviation(K=10_000, steps=1_000) -> None:
     print(results.iloc[0]["px_fit_results"].params)
     results = results.iloc[0]["px_fit_results"].summary()
     print(results)
+    print(f"K={K}, steps={steps}")
 
 
 if __name__ == '__main__':
-    # generate_single_drunkard_plot()
-    # generate_multiple_drunkard_plot()
-    standard_deviation()
+    generate_single_drunkard_plot()
+    generate_multiple_drunkard_plot()
+    standard_deviation(1000, 100)

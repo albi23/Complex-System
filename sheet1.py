@@ -48,6 +48,8 @@ def task2():
 def task3(vector_a: List[float], vector_b: List[float]):
     """
     Write a function that computes cosine of the angle between two d-dimensional vectors
+    Notes: cos α = 	a·b /(|a|·|b|) => |a| = sqrt(x1^2+...)
+
     """
     assert len(vector_a) == len(vector_b), "Vectors have different dimensions"
 
@@ -69,7 +71,7 @@ def task4(integers: List[int], divider: int):
     assert len(integers) > 0, "Give sth more"
     assert divider != 0, "divider can not be 0"
 
-    a = integers[0];
+    a = integers[0]
     b = integers[len(integers) - 1]
     integers.sort()
     print('Greater than a:', a, list(filter(lambda arg: arg > a, integers[integers.index(a):])))
@@ -223,8 +225,12 @@ def task17():
     # nltk.download('nps_chat')
     # nltk.download('webtext')
     # nltk.download('treebank')
+    txt6 = [x.lower() for x in text6]
+    txt7 = [x.lower() for x in text7]
 
-    print(f'Word knight occurs {text6.count("knight")} times in text6 and {text7.count("knight")} in text7 ')
+
+    # print(f'Word knight occurs {text6.count("knight")} times in text6 and {text7.count("knight")} in text7 ')
+    print(f'Word knight occurs {txt6.count("knight")} times in text6 and {txt7.count("knight")} in text7 ')
 
 
 def task18():
@@ -503,6 +509,11 @@ def task32(with_permutation=False) -> Dict:
         for ((txt1, txt2), jaccard) in zip(itertools.combinations(texts, 2), jaccards)
     }
 
+# {'text1:text2': 0.11731843575418995, 'text1:text3': 0.005025125628140704, 'text2:text3': 0.015228426395939087}
+# {'text1:text2': 0.06951871657754011, 'text1:text3': 0.005025125628140704, 'text2:text3': 0.015228426395939087}
+# {'text1:text2': 0.10497237569060773, 'text1:text3': 0.010101010101010102, 'text2:text3': 0.015228426395939087}
+# {'text1:text2': 0.06382978723404255, 'text1:text3': 0.005025125628140704, 'text2:text3': 0.02040816326530612}
+
 
 def task33() -> None:
     """
@@ -552,5 +563,5 @@ if __name__ == '__main__':
     # task30("Construct a function that for a given string and a natural number k", 3)
     # task31()
     # print(task32())
-    # task33()
+    task33()
     print()
