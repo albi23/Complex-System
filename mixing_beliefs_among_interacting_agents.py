@@ -15,9 +15,9 @@ import plotly.graph_objects as go
 from plotly.io import write_image
 
 
-def opinion_simulation_1(d: float = 0.5, N: int=2000) -> None:
-    u: float = 0.5
-    time_unit = 1
+def opinion_simulation_1(d: float = 0.5, N: int = 2000) -> None:
+    u: float = 0.26
+    time_unit = 2
     MCS = 50_000
 
     opinions: List[float] = [rand.random() for _ in range(N)]
@@ -27,7 +27,7 @@ def opinion_simulation_1(d: float = 0.5, N: int=2000) -> None:
     y: List[float] = []
 
     for i in range(MCS):
-        print("\r" + str((float(i + 1) / MCS) * 100), end="%")
+        # print("\r" + str((float(i + 1) / MCS) * 100), end="%")
         for j in range(time_unit):
             agent_1: int = rand.randint(0, N - 1)
             agent_2: int = rand.randint(0, N - 1)
@@ -37,17 +37,10 @@ def opinion_simulation_1(d: float = 0.5, N: int=2000) -> None:
                 opinions[agent_1] = opinions[agent_1] + u * (opinions[agent_2] - opinions[agent_1])
                 opinions[agent_2] = opinions[agent_2] + u * (opinions[agent_1] - opinions[agent_2])
                 x.append(i + 1)
-                x.append(i + 1)
                 y.append(opinions[agent_1])
+                x.append(i + 1)
                 y.append(opinions[agent_2])
 
-        # s = set(opinions)
-        # if i in [100,200,300,400,500]:
-        #     print("\r" + str(len(s)))
-        # s = set(opinions)
-        # for op in s:
-        #     x.append(i+1)
-        #     y.append(op)
     create_charts(x, y)
 
 
@@ -60,24 +53,29 @@ def create_charts(x, y) -> None:
     import plotly.express as px
 
     fig = px.scatter(df2, x="x", y="y")
-    fig.update_traces(marker=dict(size=8, color='black', symbol='diamond-open'))
-    # fig.show()
 
-    # for i in range(1,4,1):
-    # fig.add_trace(go.Scatter(df, x='x',y='y',mode='markers', name=f"L=", x0=3,
-    #                          marker=dict(size=5, color='black',
-    #                                      symbol='octagon-open-dot')))
-    # fig.add_trace(go.Scatter(df,x='x1',y='y1', mode='markers', name=f"L=", x0=3,
-    #                          marker=dict(size=5, color='black',
-    #                                      symbol='octagon-open-dot')))
-    fig.update_layout({'plot_bgcolor': 'rgb(255, 255, 255)', 'paper_bgcolor': 'rgb(255, 255, 255)'}
-                      # ,width=1200,
-                      # height=858
+    fig.update_traces(marker=dict(size=8, color='black', symbol='diamond-open'), mode='markers', name=f"opinions")
+    fig.update_layout({'plot_bgcolor': 'rgb(255, 255, 255)', 'paper_bgcolor': 'rgb(255, 255, 255)'},
+                      # margin=dict(l=0, t=0, r=0, b=0),
+                      xaxis_tickformat='d',
+                      xaxis=dict(tick0=0,
+                                 dtick=5_000),
+                      showlegend=True,
+                      legend=dict(
+                          x=0.92,
+                          y=1,
+                          traceorder='normal',
+                          font=dict(size=13,color='black'),
                       )
+                )
+    fig['data'][0]['showlegend'] = True
+
     fig.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticks='outside', tickwidth=2,
-                     ticklen=8, title='x_title', title_font_size=20, title_font_color='black')
+                     ticklen=8, title='', title_font_size=20, title_font_color='black', color='black',
+                     tickfont=dict({'size': 13}))
     fig.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticks='outside', tickwidth=2,
-                     ticklen=8, title='ytitle', title_font_size=20, title_font_color='black')
+                     ticklen=8, title='', title_font_size=20, title_font_color='black', color='black',
+                     tickfont=dict({'size': 13}))
 
     # write_image(fig, f"opinions.png")
     fig.show()
