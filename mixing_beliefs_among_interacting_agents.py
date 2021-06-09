@@ -10,6 +10,7 @@ u is the convergence parameter taken between 0 and 0.5
 openness to discussion, here represented by threshold d
 """
 import random as rand
+from functools import reduce
 from typing import List
 import plotly.graph_objects as go
 from plotly.io import write_image
@@ -44,7 +45,7 @@ def opinion_simulation_1(d: float = 0.1, N: int = 1_000) -> None:
     create_charts(x, y)
 
 
-def opinion_simulation_2(d: float = 0.05, N: int = 1_000) -> None:
+def opinion_simulation_2(d: float = 0.15, N: int = 1_000) -> None:
     u: float = 0.5
     time_unit = 1
     MCS = 250
@@ -66,6 +67,44 @@ def opinion_simulation_2(d: float = 0.05, N: int = 1_000) -> None:
                 opinions_copy[agent_2] = opinions_copy[agent_2] + u * (opinions_copy[agent_1] - opinions_copy[agent_2])
 
     create_charts2(initial_opinions, opinions_copy)
+
+
+def opinion_simulation_3(d: float = 0.15, N: int = 1_000) -> None:
+    u: float = 0.5
+    samples = 3
+    MCS = 50_000
+
+    for _ in range(samples):
+        initial_opinions: List[float] = [rand.random() for _ in range(N)]
+        opinions: List[float] = [op for op in initial_opinions]
+        for _ in range(MCS):
+            agent_1: int = rand.randint(0, N - 1)
+            agent_2: int = rand.randint(0, N - 1)
+            while agent_1 == agent_2:
+                agent_2 = rand.randint(0, N - 1)
+            if abs(opinions[agent_1] - opinions[agent_2]) < d:
+                opinions[agent_1] = opinions[agent_1] + u * (opinions[agent_2] - opinions[agent_1])
+                opinions[agent_2] = opinions[agent_2] + u * (opinions[agent_1] - opinions[agent_2])
+
+        create_charts2(initial_opinions, opinions)
+        opinions = sorted(opinions)
+        clusters = {}
+        curr = opinions[0]
+        dis = 0.009
+        p_max = 1 / (d * 0.5)
+        min_cluster_size = N / p_max
+        i = 0
+        while i < len(opinions):
+            counter = 1
+            while i < len(opinions) and curr + dis > opinions[i]:
+                i += 1
+                counter += 1
+            clusters[curr] = counter
+            if i < len(opinions):
+                curr = opinions[i]
+            i += 1
+
+        peeks = len(list(filter(lambda x: x > min_cluster_size, clusters.values())))
 
 
 def create_charts(x, y) -> None:
@@ -116,9 +155,9 @@ def create_charts2(x, y) -> None:
     help_fig = px.scatter(df2, x="x", y="y", trendline="ols")
     x_trend = help_fig["data"][1]['x']
     y_trend = help_fig["data"][1]['y']
-    fig.add_trace(go.Line(x=[0,1], y=[0, 1], line={'dash': 'dash','color': 'grey'}))
-    fig.add_trace(go.Line(x=[0.1,1], y=[0,0.9], line={'dash': 'dash','color': 'grey'}))
-    fig.add_trace(go.Line(x=[0,0.9], y=[0.1,1], line={'dash': 'dash','color': 'grey'}))
+    fig.add_trace(go.Line(x=[0, 1], y=[0, 1], line={'dash': 'dash', 'color': 'grey'}))
+    fig.add_trace(go.Line(x=[0.1, 1], y=[0, 0.9], line={'dash': 'dash', 'color': 'grey'}))
+    fig.add_trace(go.Line(x=[0, 0.9], y=[0.1, 1], line={'dash': 'dash', 'color': 'grey'}))
     # fig.add_trace(go.Line(x=x_trend, y=y_trend, line={'dash': 'dash','color': 'grey'}))
 
     fig.update_layout(
@@ -126,7 +165,7 @@ def create_charts2(x, y) -> None:
         xaxis=dict(tick0=0, dtick=0.2),
         yaxis=dict(tick0=0, dtick=0.2),
     )
-#            ['solid', 'dot', 'dash', 'longdash', 'dashdot', 'longdashdot']
+    #            ['solid', 'dot', 'dash', 'longdash', 'dashdot', 'longdashdot']
 
     fig.update_xaxes(showgrid=True, showline=True, linewidth=1, linecolor='black', mirror=True,
                      ticks='outside', tickwidth=2,
@@ -146,7 +185,8 @@ def create_charts2(x, y) -> None:
 
 if __name__ == '__main__':
     # opinion_simulation_1()
-    opinion_simulation_2()
+    # opinion_simulation_2()
+    opinion_simulation_3()
 
     #     import plotly.express as px
     #
