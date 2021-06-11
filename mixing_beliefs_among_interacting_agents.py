@@ -14,6 +14,7 @@ from functools import reduce
 from typing import List
 import plotly.graph_objects as go
 from plotly.io import write_image
+from collections import defaultdict
 
 
 def opinion_simulation_1(d: float = 0.1, N: int = 1_000) -> None:
@@ -69,11 +70,12 @@ def opinion_simulation_2(d: float = 0.15, N: int = 1_000) -> None:
     create_charts2(initial_opinions, opinions_copy)
 
 
-def opinion_simulation_3(d: float = 0.15, N: int = 1_000) -> None:
+def opinion_simulation_3(d: float = 0.15, N: int = 1_000) -> dict:
     u: float = 0.5
-    samples = 3
-    MCS = 50_000
+    samples = 250
+    MCS = 80_000
 
+    tmp_dict = defaultdict(lambda: 0)
     for _ in range(samples):
         initial_opinions: List[float] = [rand.random() for _ in range(N)]
         opinions: List[float] = [op for op in initial_opinions]
@@ -86,25 +88,35 @@ def opinion_simulation_3(d: float = 0.15, N: int = 1_000) -> None:
                 opinions[agent_1] = opinions[agent_1] + u * (opinions[agent_2] - opinions[agent_1])
                 opinions[agent_2] = opinions[agent_2] + u * (opinions[agent_1] - opinions[agent_2])
 
-        create_charts2(initial_opinions, opinions)
-        opinions = sorted(opinions)
-        clusters = {}
-        curr = opinions[0]
-        dis = 0.009
-        p_max = 1 / (d * 0.5)
-        min_cluster_size = N / p_max
-        i = 0
-        while i < len(opinions):
-            counter = 1
-            while i < len(opinions) and curr + dis > opinions[i]:
-                i += 1
-                counter += 1
-            clusters[curr] = counter
-            if i < len(opinions):
-                curr = opinions[i]
-            i += 1
+        # create_charts2(initial_opinions, opinions)
+        peeks = count_peeks(N, d, opinions)
+        tmp_dict[peeks] = tmp_dict[peeks] + 1
+    print(tmp_dict)
+    return {k: v for k, v in tmp_dict.items() if k < 8}
 
-        peeks = len(list(filter(lambda x: x > min_cluster_size, clusters.values())))
+
+
+
+def count_peeks(N: int, d: float, opinions: List[float]) -> int:
+    opinions = sorted(opinions)
+    clusters = {}
+    curr = opinions[0]
+    dis = d * 0.5
+    p_max = 1 / (d * 0.5)
+    min_cluster_size = N / p_max
+    min_cluster_size = 50
+    i = 0
+    while i < len(opinions):
+        counter = 1
+        while i < len(opinions) and curr + dis > opinions[i]:
+            i += 1
+            counter += 1
+        clusters[curr] = counter
+        if i < len(opinions):
+            curr = opinions[i]
+        i += 1
+    len1 = len(list(filter(lambda x: x > min_cluster_size, clusters.values())))
+    return len1
 
 
 def create_charts(x, y) -> None:
@@ -183,10 +195,25 @@ def create_charts2(x, y) -> None:
     fig.show()
 
 
+def simulation_4() -> None:
+    steep: float = 0.05
+    result: List[dict] = []
+    x = []
+    while steep <= 1.0:
+        x.append(steep)
+        steep += 0.02
+        result.append(opinion_simulation_3(steep))
+
+    fig = go.Figure()
+
+    for res in result:
+        fig.add_trace(go.Line(x=x, y=[0, 1], line={'dash': 'dash', 'color': 'grey'}))
+
+
 if __name__ == '__main__':
     # opinion_simulation_1()
     # opinion_simulation_2()
-    opinion_simulation_3()
+
 
     #     import plotly.express as px
     #
