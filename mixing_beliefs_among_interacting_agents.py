@@ -76,9 +76,10 @@ def opinion_simulation_3(d: float = 0.15, N: int = 1_000) -> dict:
     MCS = 80_000
 
     tmp_dict = defaultdict(lambda: 0)
-    for _ in range(samples):
+    for i in range(samples):
         initial_opinions: List[float] = [rand.random() for _ in range(N)]
         opinions: List[float] = [op for op in initial_opinions]
+        print("\r" + str((float(i + 1) / samples) * 100), end="%")
         for _ in range(MCS):
             agent_1: int = rand.randint(0, N - 1)
             agent_2: int = rand.randint(0, N - 1)
@@ -91,10 +92,7 @@ def opinion_simulation_3(d: float = 0.15, N: int = 1_000) -> dict:
         # create_charts2(initial_opinions, opinions)
         peeks = count_peeks(N, d, opinions)
         tmp_dict[peeks] = tmp_dict[peeks] + 1
-    print(tmp_dict)
     return {k: v for k, v in tmp_dict.items() if k < 8}
-
-
 
 
 def count_peeks(N: int, d: float, opinions: List[float]) -> int:
@@ -197,23 +195,57 @@ def create_charts2(x, y) -> None:
 
 def simulation_4() -> None:
     steep: float = 0.05
-    result: List[dict] = []
-    x = []
-    while steep <= 1.0:
-        x.append(steep)
+    histogram: dict = defaultdict(lambda: [[], []])
+    while steep <= 0.5:
         steep += 0.02
-        result.append(opinion_simulation_3(steep))
+        res = opinion_simulation_3(steep)
+        for k, v in res.items():
+            arr = histogram[k]
+            arr[0].append(steep)
+            arr[1].append(v)
 
     fig = go.Figure()
 
-    for res in result:
-        fig.add_trace(go.Line(x=x, y=[0, 1], line={'dash': 'dash', 'color': 'grey'}))
+    for k, v in histogram.items():
+        fig.add_trace(go.Line(x=histogram[k][0], y=histogram[k][1], name=f"{k} peeks"))
+
+    fig.update_layout(
+        {'plot_bgcolor': 'rgb(255, 255, 255)', 'paper_bgcolor': 'rgb(255, 255, 255)'}
+    )
+    fig.update_xaxes(
+        linewidth=1,
+        linecolor='black',
+        mirror=True,
+        ticks='outside',
+        tickwidth=2,
+        tickfont=dict({'size': 13}),
+        ticklen=8,
+        gridcolor='white',
+        title='',
+        title_font_size=20,
+        title_font_color='black',
+        color='black',
+    )
+    fig.update_yaxes(
+        linewidth=1,
+        linecolor='black',
+        mirror=True,
+        ticks='outside',
+        tickwidth=2,
+        ticklen=8,
+        title='',
+        title_font_size=20,
+        title_font_color='black',
+        color='black',
+        tickfont=dict({'size': 13})
+    )
+    fig.show()
 
 
 if __name__ == '__main__':
     # opinion_simulation_1()
     # opinion_simulation_2()
-
+    simulation_4()
 
     #     import plotly.express as px
     #
