@@ -1,14 +1,3 @@
-"""
-
-|x - x'| < d
-
-x = x + u * (x' - x)
-x' = x' + u * (x - x')
-
-u is the convergence parameter taken between 0 and 0.5
-
-openness to discussion, here represented by threshold d
-"""
 import random as rand
 from functools import reduce
 from typing import List
@@ -23,8 +12,6 @@ def opinion_simulation_1(d: float = 0.1, N: int = 1_000) -> None:
     MCS = 50_000
 
     opinions: List[float] = [rand.random() for _ in range(N)]
-    # x = [0 for _ in opinions]
-    # y = [op for op in opinions]
     x: List[int] = []
     y: List[float] = []
 
@@ -43,7 +30,7 @@ def opinion_simulation_1(d: float = 0.1, N: int = 1_000) -> None:
                 x.append(i + 1)
                 y.append(opinions[agent_2])
 
-    create_charts(x, y)
+    peeks_scater_plot(x, y)
 
 
 def opinion_simulation_2(d: float = 0.15, N: int = 1_000) -> None:
@@ -67,7 +54,7 @@ def opinion_simulation_2(d: float = 0.15, N: int = 1_000) -> None:
                 opinions_copy[agent_1] = opinions_copy[agent_1] + u * (opinions_copy[agent_2] - opinions_copy[agent_1])
                 opinions_copy[agent_2] = opinions_copy[agent_2] + u * (opinions_copy[agent_1] - opinions_copy[agent_2])
 
-    create_charts2(initial_opinions, opinions_copy)
+    final_opinion_vs_initial(initial_opinions, opinions_copy)
 
 
 def opinion_peeks(d: float = 0.15, N: int = 1_000) -> dict:
@@ -89,7 +76,7 @@ def opinion_peeks(d: float = 0.15, N: int = 1_000) -> dict:
                 opinions[agent_1] = opinions[agent_1] + u * (opinions[agent_2] - opinions[agent_1])
                 opinions[agent_2] = opinions[agent_2] + u * (opinions[agent_1] - opinions[agent_2])
 
-        # create_charts2(initial_opinions, opinions)
+        final_opinion_vs_initial(initial_opinions, opinions)
         peeks = count_peeks(N, d, opinions)
         tmp_dict[peeks] = tmp_dict[peeks] + 1
     return {k: v for k, v in tmp_dict.items() if k < 8}
@@ -117,8 +104,7 @@ def count_peeks(N: int, d: float, opinions: List[float]) -> int:
     return len1
 
 
-def create_charts(x, y) -> None:
-    # fig = go.Figure()
+def peeks_scater_plot(x, y) -> None:
     df2 = dict({
         'x': x,
         'y': y,
@@ -129,7 +115,6 @@ def create_charts(x, y) -> None:
 
     fig.update_traces(marker=dict(size=8, color='black', symbol='diamond-open'), mode='markers', name=f"opinions")
     fig.update_layout({'plot_bgcolor': 'rgb(255, 255, 255)', 'paper_bgcolor': 'rgb(255, 255, 255)'},
-                      # margin=dict(l=0, t=0, r=0, b=0),
                       xaxis_tickformat='d',
                       xaxis=dict(tick0=0,
                                  dtick=5_000),
@@ -154,7 +139,7 @@ def create_charts(x, y) -> None:
     fig.show()
 
 
-def create_charts2(x, y) -> None:
+def final_opinion_vs_initial(x, y) -> None:
     import plotly.express as px
     df2 = dict({'x': x, 'y': y, })
 
@@ -244,7 +229,6 @@ def simulation_4() -> None:
 
 def simulation_5(lattice_size=29, d: float = 0.3, u: float = 0.3, mcs_steep=100_000) -> None:
     opinions = [[rand.random() for _ in range(lattice_size)] for _ in range(lattice_size)]
-
     for i in range(mcs_steep):
         print("\r" + str((float(i + 1) / mcs_steep) * 100), end="%")
         agent_1_x: int = rand.randint(0, lattice_size - 1)
@@ -266,6 +250,40 @@ def simulation_5(lattice_size=29, d: float = 0.3, u: float = 0.3, mcs_steep=100_
             opinions[agent_2_cord[0]][agent_2_cord[1]] = opinions[agent_2_cord[0]][agent_2_cord[1]] + u * (
                     opinions[agent_1_x][agent_1_y] - opinions[agent_2_cord[0]][agent_2_cord[1]])
 
+    generate_plot_for_simulation_5(d, opinions)
+
+
+def generate_plot_for_simulation_5(d, opinions):
+    heat_map_plot(opinions)
+    clusters_100_times = {k * 100: v for k, v in get_clusters(d, opinions).items()}
+    x = list(clusters_100_times.keys())
+    y = list(clusters_100_times.values())
+    df2 = dict({'x': x, 'y': y, })
+    fig = go.Figure()
+    sc1 = go.Scatter(
+        df2, x=x, y=y, mode='markers',
+        marker=dict(size=8, color='black', symbol='cross-open'),
+    )
+    fig.add_trace(sc1)
+    fig.update_layout(
+        {'plot_bgcolor': 'rgb(255, 255, 255)', 'paper_bgcolor': 'rgb(255, 255, 255)'},
+        yaxis_range=[0, 600],
+        xaxis_range=[0, 100],
+    )
+    fig.update_xaxes(showgrid=False, showline=True, linewidth=1, linecolor='black', mirror=True,
+                     ticks='outside', tickwidth=2,
+                     gridcolor='black',
+                     ticklen=8, title='', title_font_size=20, title_font_color='black', color='black',
+                     tickfont=dict({'size': 13}))
+    fig.update_yaxes(showgrid=False, showline=True, gridwidth=0.5, linewidth=1, linecolor='black', mirror=True,
+                     ticks='outside', tickwidth=2,
+                     ticklen=8, title='', title_font_size=20, title_font_color='black', color='black',
+                     gridcolor='black',
+                     tickfont=dict({'size': 13}))
+    fig.show()
+
+
+def heat_map_plot(opinions):
     import plotly.figure_factory as ff
     txt = [["" for _ in range(len(opinions))] for _ in range(len(opinions))]
     tmp = []
@@ -282,27 +300,80 @@ def simulation_5(lattice_size=29, d: float = 0.3, u: float = 0.3, mcs_steep=100_
     fig.show()
 
 
+def get_clusters(d: float, opinions: List[List[float]]) -> dict:
+    linear_opinion = sorted(flat(opinions))
+    clusters = {}
+    curr = linear_opinion[0]
+    dis = d * 0.5
+    i = 0
+    while i < len(linear_opinion):
+        counter = 1
+        while i < len(linear_opinion) and curr + dis > linear_opinion[i]:
+            i += 1
+            counter += 1
+        clusters[curr] = counter
+        if i < len(linear_opinion):
+            curr = linear_opinion[i]
+        i += 1
+    return clusters
+
+
+def flat(opinions):
+    linear_opinion = []
+    for row in opinions:
+        linear_opinion += row
+    return linear_opinion
+
+
+def simulation_5_triangle() -> None:
+    # import plotly.figure_factory as ff
+    # txt = [["" for _ in range(5)] for _ in range(5)]
+    # tmp = []
+    # test_arr = [1, 2, 3, 4, 5]
+    # test = [[rand.random() for i in range(j)] for j in test_arr]
+    # for i in range(len(test)):
+    #     while len(test[i]) < len(test):
+    #         test[i].append(-1)
+    # # for i in range(len(opinions) - 1, -1, -1):
+    # #     tmp.append(opinions[i])
+    # color_discrete_map = {-1: "white" },
+    # fig = ff.create_annotated_heatmap(test, #annotation_text=txt,   'rgb(0,0,0)', 'rgb(219,219,219)'
+    #                                   colorscale=[
+    #                                       [0, 'rgb(255,255,255)'],
+    #                                       [0.01, 'rgb(255,255,255)'],
+    #                                       [0.01, 'rgb(0,0,0)'],
+    #                                       [1.0, 'rgb(219,219,219)'],
+    #                                   ],
+    #                                   # colorscale=['rgb(255,255,255)', 'rgb(255,255,255)'],
+    #                                   zmin=0, zmax=1, showscale=False, xgap=3, ygap=3)
+    # fig.update_xaxes(showline=False, showgrid=False, linewidth=1, linecolor='black', mirror=True)
+    # fig.update_yaxes(showline=False, showgrid=False, linewidth=1, linecolor='black', mirror=True)
+    # fig.update_layout({'plot_bgcolor': 'rgb(255, 255, 255)', 'paper_bgcolor': 'rgb(255, 255, 255)'}, width=1000,
+    #                   height=1000)
+    # fig.show()
+    pass
+
+
+def simulation_6(m: int = 13, N: int = 1000, u=0.5, d=0.2, mc_steps=10 ** 6) -> None:
+    opinions_vectors = [[1 if rand.random() > 0.5 else 0 for _ in range(m)] for _ in range(N)]
+
+    for i in range(mc_steps):
+        agent_1: int = rand.randint(0, N - 1)
+        agent_2: int = rand.randint(0, N - 1)
+
+        if abs(sum(opinions_vectors[agent_1]) - sum(opinions_vectors[agent_2])) < d-1:
+            pass
+
+
+
+    pass
+
+
 if __name__ == '__main__':
     # opinion_simulation_1()
     # opinion_simulation_2()
     # simulation_4()
     # simulation_5(lattice_size=29, d=0.3, u=0.3, mcs_steep=100_000)
-    simulation_5(lattice_size=29, d=0.15, u=0.3, mcs_steep=100_000)
+    # simulation_5(lattice_size=29, d=0.15, u=0.3, mcs_steep=100_000)
 
-    #     import plotly.express as px
-    #
-    #     df = px.data.iris()  # iris is a pandas DataFrame
-    #     width_ = df['sepal_width']
-    #     l = list(width_)
-    #     l.sort()
-    #     print(l)
-    #     values = list(df['sepal_length'])
-    #     values.sort()
-    #     print(values)
-    #     print(values)
-    #     df2 = dict({'x': [2.0, 2.2, 2.2, 2.2, 2.3, 2.3, 2.3, 2.3, 2.4, 2.4, 2.4, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.6, 2.6, 2.6, 2.6, 2.6, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.7, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.9, 2.9, 2.9, 2.9, 2.9, 2.9, 2.9, 2.9, 2.9, 2.9, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.3, 3.3, 3.3, 3.3, 3.3, 3.3, 3.4, 3.4, 3.4, 3.4, 3.4, 3.4, 3.4, 3.4, 3.4, 3.4, 3.4, 3.4, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.6, 3.6, 3.6, 3.7, 3.7, 3.7, 3.8, 3.8, 3.8, 3.8, 3.8, 3.8, 3.9, 3.9, 4.0, 4.1, 4.2, 4.4],
-    #           'y': [4.3, 4.4, 4.4, 4.4, 4.5, 4.6, 4.6, 4.6, 4.6, 4.7, 4.7, 4.8, 4.8, 4.8, 4.8, 4.8, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.2, 5.2, 5.2, 5.2, 5.3, 5.4, 5.4, 5.4, 5.4, 5.4, 5.4, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.6, 5.6, 5.6, 5.6, 5.6, 5.6, 5.7, 5.7, 5.7, 5.7, 5.7, 5.7, 5.7, 5.7, 5.8, 5.8, 5.8, 5.8, 5.8, 5.8, 5.8, 5.9, 5.9, 5.9, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.1, 6.1, 6.1, 6.1, 6.1, 6.1, 6.2, 6.2, 6.2, 6.2, 6.3, 6.3, 6.3, 6.3, 6.3, 6.3, 6.3, 6.3, 6.3, 6.4, 6.4, 6.4, 6.4, 6.4, 6.4, 6.4, 6.5, 6.5, 6.5, 6.5, 6.5, 6.6, 6.6, 6.7, 6.7, 6.7, 6.7, 6.7, 6.7, 6.7, 6.7, 6.8, 6.8, 6.8, 6.9, 6.9, 6.9, 6.9, 7.0, 7.1, 7.2, 7.2, 7.2, 7.3, 7.4, 7.6, 7.7, 7.7, 7.7, 7.7, 7.9]
-    # })
-    #     fig = px.scatter(df2, x="x", y="y")
-    #     fig.show()
     pass
