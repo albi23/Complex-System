@@ -70,7 +70,7 @@ def opinion_simulation_2(d: float = 0.15, N: int = 1_000) -> None:
     create_charts2(initial_opinions, opinions_copy)
 
 
-def opinion_simulation_3(d: float = 0.15, N: int = 1_000) -> dict:
+def opinion_peeks(d: float = 0.15, N: int = 1_000) -> dict:
     u: float = 0.5
     samples = 250
     MCS = 80_000
@@ -198,7 +198,7 @@ def simulation_4() -> None:
     histogram: dict = defaultdict(lambda: [[], []])
     while steep <= 0.5:
         steep += 0.02
-        res = opinion_simulation_3(steep)
+        res = opinion_peeks(steep)
         for k, v in res.items():
             arr = histogram[k]
             arr[0].append(steep)
@@ -242,10 +242,52 @@ def simulation_4() -> None:
     fig.show()
 
 
+def simulation_5(lattice_size=29, d: float = 0.3, u: float = 0.3, mcs_steep=100_000) -> None:
+    opinions = [[rand.random() for _ in range(lattice_size)] for _ in range(lattice_size)]
+
+    for i in range(mcs_steep):
+        print("\r" + str((float(i + 1) / mcs_steep) * 100), end="%")
+        agent_1_x: int = rand.randint(0, lattice_size - 1)
+        agent_1_y: int = rand.randint(0, lattice_size - 1)
+        neighbor_location: int = rand.randint(0, 3)  # N, S, E, W
+        agent_2_cord: tuple
+        if neighbor_location == 0:
+            agent_2_cord = (lattice_size - 1, agent_1_y) if agent_1_x == 0 else (agent_1_x - 1, agent_1_y)
+        elif neighbor_location == 1:
+            agent_2_cord = (0, agent_1_y) if agent_1_x == lattice_size - 1 else (agent_1_x + 1, agent_1_y)
+        elif neighbor_location == 2:
+            agent_2_cord = (agent_1_x, lattice_size - 1) if agent_1_y == 0 else (agent_1_x, agent_1_y - 1)
+        else:
+            agent_2_cord = (agent_1_x, 0) if agent_1_y == lattice_size - 1 else (agent_1_x, agent_1_y + 1)
+
+        if abs(opinions[agent_1_x][agent_1_y] - opinions[agent_2_cord[0]][agent_2_cord[1]]) < d:
+            opinions[agent_1_x][agent_1_y] = opinions[agent_1_x][agent_1_y] + u * (
+                    opinions[agent_2_cord[0]][agent_2_cord[1]] - opinions[agent_1_x][agent_1_y])
+            opinions[agent_2_cord[0]][agent_2_cord[1]] = opinions[agent_2_cord[0]][agent_2_cord[1]] + u * (
+                    opinions[agent_1_x][agent_1_y] - opinions[agent_2_cord[0]][agent_2_cord[1]])
+
+    import plotly.figure_factory as ff
+    txt = [["" for _ in range(len(opinions))] for _ in range(len(opinions))]
+    tmp = []
+    for i in range(len(opinions) - 1, -1, -1):
+        tmp.append(opinions[i])
+    fig = ff.create_annotated_heatmap(tmp, annotation_text=txt,
+                                      # colorscale=['rgb(0,0,0)', 'rgb(219,219,219)'],
+                                      colorscale=['rgb(230,230,230)', 'rgb(0,0,0)'],
+                                      zmin=0, zmax=1, showscale=False, xgap=3, ygap=3)
+    fig.update_xaxes(showline=False, showgrid=False, linewidth=1, linecolor='black', mirror=True)
+    fig.update_yaxes(showline=False, showgrid=False, linewidth=1, linecolor='black', mirror=True)
+    fig.update_layout({'plot_bgcolor': 'rgb(255, 255, 255)', 'paper_bgcolor': 'rgb(255, 255, 255)'}, width=1000,
+                      height=1000)
+    fig.show()
+
+
 if __name__ == '__main__':
     # opinion_simulation_1()
     # opinion_simulation_2()
-    simulation_4()
+    # simulation_4()
+    # simulation_5(lattice_size=29, d=0.3, u=0.3, mcs_steep=100_000)
+    simulation_5(lattice_size=29, d=0.15, u=0.3, mcs_steep=100_000)
 
     #     import plotly.express as px
     #
