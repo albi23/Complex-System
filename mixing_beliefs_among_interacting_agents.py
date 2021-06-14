@@ -354,19 +354,117 @@ def simulation_5_triangle() -> None:
     pass
 
 
-def simulation_6(m: int = 13, N: int = 1000, u=0.5, d=0.2, mc_steps=10 ** 6) -> None:
+def simulation_6(m: int = 13, N: int = 1000, u=0.5, d: int = 2, mc_steps=10 ** 7) -> None:
     opinions_vectors = [[1 if rand.random() > 0.5 else 0 for _ in range(m)] for _ in range(N)]
 
     for i in range(mc_steps):
+        print("\r" + str((float(i + 1) / mc_steps) * 100), end="%")
+
         agent_1: int = rand.randint(0, N - 1)
         agent_2: int = rand.randint(0, N - 1)
 
-        if abs(sum(opinions_vectors[agent_1]) - sum(opinions_vectors[agent_2])) < d-1:
-            pass
+        if hamming_distance(opinions_vectors[agent_1], opinions_vectors[agent_2]) < d:
+            if rand.random() < u:  # agent 1 try to convince agent 2 on differ subject
+                convince_process(opinions_vectors[agent_1], opinions_vectors[agent_2], m, u)
+            else:
+                convince_process(opinions_vectors[agent_2], opinions_vectors[agent_1], m, u)
+
+    # distance from X_0
+    y: List[int] = []
+    for row in opinions_vectors:
+        y.append(sum(row))
+
+    x = [i for i in range(N)]
+    df2 = dict({'x': x, 'y': y, })
+    fig = go.Figure()
+    sc1 = go.Scatter(
+        df2, x=x, y=y, mode='markers',
+        marker=dict(size=8, color='black', symbol='cross-open'),
+    )
+    fig.add_trace(sc1)
+    fig.update_layout(
+        {'plot_bgcolor': 'rgb(255, 255, 255)', 'paper_bgcolor': 'rgb(255, 255, 255)'},
+        yaxis_range=[0, 13],
+        # xaxis_range=[0, 100],
+    )
+    fig.update_xaxes(showgrid=False, showline=True, linewidth=1, linecolor='black', mirror=True,
+                     ticks='outside', tickwidth=2,
+                     gridcolor='black',
+                     ticklen=8, title='', title_font_size=20, title_font_color='black', color='black',
+                     tickfont=dict({'size': 13}))
+    fig.update_yaxes(showgrid=False, showline=True, gridwidth=0.5, linewidth=1, linecolor='black', mirror=True,
+                     ticks='outside', tickwidth=2,
+                     ticklen=8, title='', title_font_size=20, title_font_color='black', color='black',
+                     gridcolor='black',
+                     tickfont=dict({'size': 13}))
+    fig.show()
 
 
+def convince_process(agent_1_opinion: List[int], agent_2_opinion: List[int], m: int, u: float):
+    for idx in range(m):
+        if agent_1_opinion[idx] != agent_2_opinion[idx] and rand.random() < u:
+            agent_2_opinion[idx] = agent_1_opinion[idx]
 
-    pass
+
+def hamming_distance(vector1: List[int], vector2: List[int]) -> int:
+    count = 0
+    for i in range(len(vector1)):
+        if vector1[i] != vector2[i]:
+            count += 1
+    return count
+
+
+def simulation_7(m: int = 13, N: int = 1000, u=1, d: int = 3, samples=200, time_unit=1000,
+                 plot_steps: int = 13) -> None:
+    opinions = [[1 if rand.random() > 0.5 else 0 for _ in range(m)] for _ in range(N)]
+
+    x = [step for step in range(plot_steps)]
+    y = []
+    counter =1
+    distance_dict = {i: 0 for i in range(m + 1)}
+    for step in range(plot_steps):
+        print("\r" + str((float(step + 1) / plot_steps) * 100), end="%")
+        opinions_copy: List[List[int]]
+        for i in range(samples):
+            opinions_copy = [[opinions[i][j] for j in range(m)] for i in range(N)]
+            for t in range(time_unit):
+                agent_1: int = rand.randint(0, N - 1)
+                agent_2: int = rand.randint(0, N - 1)
+
+                if hamming_distance(opinions_copy[agent_1], opinions_copy[agent_2]) < d:
+                    if rand.random() < u:  # agent 1 try to convince agent 2 on differ subject
+                        convince_process(opinions_copy[agent_1], opinions_copy[agent_2], m, u)
+                    else:
+                        convince_process(opinions_copy[agent_2], opinions_copy[agent_1], m, u)
+        counter+=1
+        print("counter = "+str(counter))
+        for agent_1 in range(N):
+            for agent_2 in range(agent_1, N):
+                distance = (hamming_distance(opinions_copy[agent_1], opinions_copy[agent_2]))
+                distance_dict[distance] += 1
+        opinions = opinions_copy
+
+    y = [val for val in distance_dict.values()]
+    df2 = dict({'x': x, 'y': y, })
+    fig = go.Figure()
+    sc1 = go.Scatter(df2, x=x, y=y, mode='lines+markers', )
+    fig.add_trace(sc1)
+    fig.update_layout(
+        {'plot_bgcolor': 'rgb(255, 255, 255)', 'paper_bgcolor': 'rgb(255, 255, 255)'},
+        # yaxis_range=[0, 13],
+        xaxis_range=[0, 12],
+    )
+    fig.update_xaxes(showgrid=False, showline=True, linewidth=1, linecolor='black', mirror=True,
+                     ticks='outside', tickwidth=2,
+                     gridcolor='black',
+                     ticklen=8, title='', title_font_size=20, title_font_color='black', color='black',
+                     tickfont=dict({'size': 13}))
+    fig.update_yaxes(showgrid=False, showline=True, gridwidth=0.5, linewidth=1, linecolor='black', mirror=True,
+                     ticks='outside', tickwidth=2,
+                     ticklen=8, title='', title_font_size=20, title_font_color='black', color='black',
+                     gridcolor='black',
+                     tickfont=dict({'size': 13}))
+    fig.show()
 
 
 if __name__ == '__main__':
@@ -375,5 +473,11 @@ if __name__ == '__main__':
     # simulation_4()
     # simulation_5(lattice_size=29, d=0.3, u=0.3, mcs_steep=100_000)
     # simulation_5(lattice_size=29, d=0.15, u=0.3, mcs_steep=100_000)
-
+    # simulation_6(d=7, mc_steps=1_000_000)
+    # simulation_6(m=13, d=8,mc_steps=10_000_000) # figure 8 --> zbiega do 9
+    # simulation_6(m=13, d=7,mc_steps=10_000_000) # figure 8 --> zbiega do 8
+    # simulation_6(m=13, d=4,mc_steps=10_000_000) # figure 8 --> zbiega do 4
+    # simulation_6(m=13, d=3,mc_steps=10_000_000) # figure 8 --> zbiega kilku pików
+    # simulation_6(m=13, d=2,mc_steps=10_000_000) # figure 8 --> zbiega do kilkunastu pików
+    simulation_7()
     pass
