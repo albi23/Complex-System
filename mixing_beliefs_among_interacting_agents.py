@@ -253,8 +253,9 @@ def simulation_5(lattice_size=29, d: float = 0.3, u: float = 0.3, mcs_steep=100_
     generate_plot_for_simulation_5(d, opinions)
 
 
-def generate_plot_for_simulation_5(d, opinions):
-    heat_map_plot(opinions)
+def generate_plot_for_simulation_5(d, opinions, with_heatmap=True):
+    if with_heatmap:
+        heat_map_plot(opinions)
     clusters_100_times = {k * 100: v for k, v in get_clusters(d, opinions).items()}
     x = list(clusters_100_times.keys())
     y = list(clusters_100_times.values())
@@ -325,33 +326,86 @@ def flat(opinions):
     return linear_opinion
 
 
-def simulation_5_triangle() -> None:
-    # import plotly.figure_factory as ff
-    # txt = [["" for _ in range(5)] for _ in range(5)]
-    # tmp = []
-    # test_arr = [1, 2, 3, 4, 5]
-    # test = [[rand.random() for i in range(j)] for j in test_arr]
-    # for i in range(len(test)):
-    #     while len(test[i]) < len(test):
-    #         test[i].append(-1)
-    # # for i in range(len(opinions) - 1, -1, -1):
-    # #     tmp.append(opinions[i])
-    # color_discrete_map = {-1: "white" },
-    # fig = ff.create_annotated_heatmap(test, #annotation_text=txt,   'rgb(0,0,0)', 'rgb(219,219,219)'
-    #                                   colorscale=[
-    #                                       [0, 'rgb(255,255,255)'],
-    #                                       [0.01, 'rgb(255,255,255)'],
-    #                                       [0.01, 'rgb(0,0,0)'],
-    #                                       [1.0, 'rgb(219,219,219)'],
-    #                                   ],
-    #                                   # colorscale=['rgb(255,255,255)', 'rgb(255,255,255)'],
-    #                                   zmin=0, zmax=1, showscale=False, xgap=3, ygap=3)
-    # fig.update_xaxes(showline=False, showgrid=False, linewidth=1, linecolor='black', mirror=True)
-    # fig.update_yaxes(showline=False, showgrid=False, linewidth=1, linecolor='black', mirror=True)
-    # fig.update_layout({'plot_bgcolor': 'rgb(255, 255, 255)', 'paper_bgcolor': 'rgb(255, 255, 255)'}, width=1000,
-    #                   height=1000)
-    # fig.show()
+def simulation_5_triangle(triangle_lattice_size: int = 29, mcs_steep: int = 100_000, u=0.3, d=0.5) -> None:
+    if triangle_lattice_size % 2 == 0:
+        raise ValueError('triangle_lattice_size should be odd')
+    opinions = generate_triangle_lattice(triangle_lattice_size)
+    rows_count = int(triangle_lattice_size / 2)
+    i = 0
+    while i < mcs_steep:
+        agent_1_x: int = rand.randint(0, rows_count - 1)
+        agent_1_y: int = rand.randint(0, len(opinions[agent_1_x]) - 1)
+        neighbor_location: int = rand.randint(0, 3)  # N, S, E, W
+        agent_2_cord: tuple
+        if neighbor_location == 0:  # N
+            if agent_1_x == rows_count and (agent_1_y == 0 or agent_1_y == triangle_lattice_size - 1):  # no neighbor
+                continue
+            agent_2_cord = (rows_count, agent_1_y + (rows_count - agent_1_x)) \
+                if agent_1_x == 0 or agent_1_y == 0 or agent_1_y == len(opinions[agent_1_x]) - 1 \
+                else (agent_1_x + 1, agent_1_y - 1)
+        elif neighbor_location == 1:  # S
+            if agent_1_x == rows_count and (agent_1_y == 0 or agent_1_y == triangle_lattice_size - 1):  # no neighbor
+                continue
+            agent_2_cord = (abs(rows_count - agent_1_y), 0) if agent_1_x == rows_count else (
+                agent_1_x + 1, agent_1_y + 1)
+        elif neighbor_location == 2:  # W
+            if agent_1_x == 0:
+                continue
+            agent_2_cord = (agent_1_x, 0) if len(opinions[agent_1_x]) - 1 == agent_1_y else (agent_1_x, agent_1_y + 1)
+        else:  # E
+            if agent_1_x == 0:
+                continue
+            agent_2_cord = (agent_1_x, len(opinions[agent_1_x]) - 1) if agent_1_y == 0 else (agent_1_x, agent_1_y - 1)
+        print("\r" + str((float(i + 1) / mcs_steep) * 100), end="%")
+        i += 1
+        if abs(opinions[agent_1_x][agent_1_y] - opinions[agent_2_cord[0]][agent_2_cord[1]]) < d:
+            opinions[agent_1_x][agent_1_y] = opinions[agent_1_x][agent_1_y] + u * (
+                    opinions[agent_2_cord[0]][agent_2_cord[1]] - opinions[agent_1_x][agent_1_y])
+            opinions[agent_2_cord[0]][agent_2_cord[1]] = opinions[agent_2_cord[0]][agent_2_cord[1]] + u * (
+                    opinions[agent_1_x][agent_1_y] - opinions[agent_2_cord[0]][agent_2_cord[1]])
+
+    to_square_matrix(opinions, rows_count)
+    triangle_heat_map(opinions, rows_count, triangle_lattice_size)
+    generate_plot_for_simulation_5(d, opinions, False)
     pass
+
+
+def triangle_heat_map(opinions, rows_count, triangle_lattice_size):
+    import plotly.figure_factory as ff
+    tmp = []
+    for i in range(len(opinions) - 1, -1, -1):
+        tmp.append(opinions[i])
+    txt = [["" for _ in range(triangle_lattice_size)] for _ in range(rows_count + 1)]
+    fig = ff.create_annotated_heatmap(tmp, annotation_text=txt,
+                                      colorscale=[
+                                          [0, 'rgb(255,255,255)'],
+                                          [0.01, 'rgb(255,255,255)'],
+                                          [0.01, 'rgb(0,0,0)'],
+                                          [1.0, 'rgb(219,219,219)'],
+                                      ],
+                                      zmin=0, zmax=1, showscale=False, xgap=3, ygap=3)
+    fig.update_xaxes(showline=False, showgrid=False, linewidth=1, linecolor='black', mirror=True)
+    fig.update_yaxes(showline=False, showgrid=False, linewidth=1, linecolor='black', mirror=True)
+    fig.update_layout({'plot_bgcolor': 'rgb(255, 255, 255)', 'paper_bgcolor': 'rgb(255, 255, 255)'}, width=1000,
+                      height=800)
+    fig.show()
+
+
+def to_square_matrix(opinions, rows_count):
+    for i in range(rows_count):
+        to_add = rows_count - i
+        for _ in range(to_add):
+            opinions[i].insert(0, -1)
+        for _ in range(to_add):
+            opinions[i].append(-1)
+
+
+def generate_triangle_lattice(size: int) -> List[List[float]]:
+    arr = [[rand.random() for _ in range(size)]]
+    while size > 1:
+        size = 1 if size == 2 else size - 2
+        arr.insert(0, [rand.random() for _ in range(size)])
+    return arr
 
 
 def simulation_6(m: int = 13, N: int = 1000, u=0.5, d: int = 2, mc_steps=10 ** 7) -> None:
@@ -414,45 +468,45 @@ def hamming_distance(vector1: List[int], vector2: List[int]) -> int:
     return count
 
 
-def simulation_7(m: int = 13, N: int = 1000, u=1, d: int = 3, samples=200, time_unit=1000,
-                 plot_steps: int = 13) -> None:
+def simulation_7(m: int = 13, N: int = 1000, u=1, d: int = 3, samples=1, time_unit=15_000,
+                 plot_steps: int = 1) -> None:
     opinions = [[1 if rand.random() > 0.5 else 0 for _ in range(m)] for _ in range(N)]
 
-    x = [step for step in range(plot_steps)]
-    y = []
-    counter =1
+    counter = 0
     distance_dict = {i: 0 for i in range(m + 1)}
     for step in range(plot_steps):
         print("\r" + str((float(step + 1) / plot_steps) * 100), end="%")
-        opinions_copy: List[List[int]]
         for i in range(samples):
-            opinions_copy = [[opinions[i][j] for j in range(m)] for i in range(N)]
             for t in range(time_unit):
                 agent_1: int = rand.randint(0, N - 1)
                 agent_2: int = rand.randint(0, N - 1)
 
-                if hamming_distance(opinions_copy[agent_1], opinions_copy[agent_2]) < d:
+                if hamming_distance(opinions[agent_1], opinions[agent_2]) < d:
                     if rand.random() < u:  # agent 1 try to convince agent 2 on differ subject
-                        convince_process(opinions_copy[agent_1], opinions_copy[agent_2], m, u)
+                        convince_process(opinions[agent_1], opinions[agent_2], m, u)
                     else:
-                        convince_process(opinions_copy[agent_2], opinions_copy[agent_1], m, u)
-        counter+=1
-        print("counter = "+str(counter))
+                        convince_process(opinions[agent_2], opinions[agent_1], m, u)
+        counter += 1
+        print("counter = " + str(counter))
         for agent_1 in range(N):
-            for agent_2 in range(agent_1, N):
-                distance = (hamming_distance(opinions_copy[agent_1], opinions_copy[agent_2]))
+            for agent_2 in range(agent_1 + 1, N):
+                distance = (m - hamming_distance(opinions[agent_1], opinions[agent_2]))
                 distance_dict[distance] += 1
-        opinions = opinions_copy
 
-    y = [val for val in distance_dict.values()]
+    y = [val / plot_steps for val in distance_dict.values()]
+    x = [val for val in distance_dict.keys()]
     df2 = dict({'x': x, 'y': y, })
     fig = go.Figure()
     sc1 = go.Scatter(df2, x=x, y=y, mode='lines+markers', )
     fig.add_trace(sc1)
     fig.update_layout(
         {'plot_bgcolor': 'rgb(255, 255, 255)', 'paper_bgcolor': 'rgb(255, 255, 255)'},
-        # yaxis_range=[0, 13],
-        xaxis_range=[0, 12],
+        yaxis=dict(tick0=0, dtick=20_000),
+        xaxis=dict(tick0=0, dtick=2),
+        xaxis_range=[0, m],
+        yaxis_range=[0, 120_000],
+        width=800,
+        height=800
     )
     fig.update_xaxes(showgrid=False, showline=True, linewidth=1, linecolor='black', mirror=True,
                      ticks='outside', tickwidth=2,
@@ -473,6 +527,8 @@ if __name__ == '__main__':
     # simulation_4()
     # simulation_5(lattice_size=29, d=0.3, u=0.3, mcs_steep=100_000)
     # simulation_5(lattice_size=29, d=0.15, u=0.3, mcs_steep=100_000)
+    # simulation_5_triangle(mcs_steep=100_000, triangle_lattice_size=29, d=0.3, u=0.3)
+    # simulation_5_triangle(mcs_steep=100_000, triangle_lattice_size=57, d=0.3, u=0.3)
     # simulation_6(d=7, mc_steps=1_000_000)
     # simulation_6(m=13, d=8,mc_steps=10_000_000) # figure 8 --> zbiega do 9
     # simulation_6(m=13, d=7,mc_steps=10_000_000) # figure 8 --> zbiega do 8
